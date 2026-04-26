@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WhatsApp Weekly Agenda Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for the preview box */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        /* WhatsApp-like background pattern */
+        .wa-bg {
+            background-color: #e5ddd5;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d1d5db' fill-opacity='0.2' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
+        }
+        /* Prevent font-size zooming on mobile inputs while keeping text readable */
+        input, textarea {
+            font-size: 16px !important;
+        }
+        /* Smooth transition for sticky preview */
+        .sticky-preview {
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-teal-600 text-white shadow-md sticky top-0 z-20">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <h1 class="text-lg font-bold tracking-wide">Agenda Generator</h1>
+            </div>
+            <div class="text-xs font-medium bg-teal-500 px-2 py-1 rounded">Mobile Ready</div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Form Section -->
+        <section class="lg:col-span-7 space-y-6 order-2 lg:order-1">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="text-md font-semibold mb-4 text-gray-700 border-b pb-2 flex items-center gap-2">
+                    <span class="bg-gray-100 w-6 h-6 flex items-center justify-center rounded-full text-xs">1</span>
+                    Header & Footer Details
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Agenda Title</label>
+                        <input type="text" id="input-title" value="🌟 *WEEKLY AGENDA* 🌟" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Location / Link</label>
+                        <input type="text" id="input-location" placeholder="e.g. 📍 Zoom: https://..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Reminder / Note</label>
+                        <input type="text" id="input-reminder" placeholder="e.g. 🔔 See you there!" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="text-md font-semibold mb-2 text-gray-700 border-b pb-2 flex items-center gap-2">
+                    <span class="bg-gray-100 w-6 h-6 flex items-center justify-center rounded-full text-xs">2</span>
+                    Daily Activities
+                </h2>
+                <p class="text-xs text-gray-400 mb-6 italic">Days with no info will be hidden from the output.</p>
+                
+                <div id="days-container" class="space-y-4">
+                    <!-- Day inputs will be injected here by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Preview & Export Section -->
+        <section class="lg:col-span-5 order-1 lg:order-2">
+            <div class="lg:sticky lg:top-24 space-y-4">
+                <h2 class="text-md font-semibold text-gray-700 flex items-center gap-2">
+                    <span class="bg-gray-100 w-6 h-6 flex items-center justify-center rounded-full text-xs">3</span>
+                    Live Preview
+                </h2>
+                
+                <!-- WhatsApp styled preview box -->
+                <div class="wa-bg p-3 md:p-5 rounded-2xl shadow-inner border border-gray-200">
+                    <div class="bg-white rounded-xl p-4 shadow-sm relative min-h-[100px]">
+                        <!-- Decorative tail for message bubble -->
+                        <div class="absolute top-0 -left-2 w-4 h-4 bg-white" style="clip-path: polygon(100% 0, 0 0, 100% 100%);"></div>
+                        
+                        <pre id="preview-text" class="whitespace-pre-wrap font-sans text-[14px] md:text-[15px] leading-relaxed text-gray-800 break-words"></pre>
+                    </div>
+                </div>
+
+                <!-- Export Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button id="btn-copy" class="bg-teal-600 active:bg-teal-800 hover:bg-teal-700 text-white font-bold py-4 px-4 rounded-2xl shadow-lg transition-all flex justify-center items-center gap-2 text-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                        <span>COPY TO CLIPBOARD</span>
+                    </button>
+                    <button id="btn-download" class="bg-white active:bg-gray-100 hover:bg-gray-50 text-teal-700 border-2 border-teal-600 font-bold py-4 px-4 rounded-2xl shadow transition-all flex justify-center items-center gap-2 text-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>SAVE AS TXT</span>
+                    </button>
+                </div>
+                
+                <!-- Feedback Toast -->
+                <div id="toast-success" class="hidden animate-bounce items-center p-4 text-sm text-teal-800 rounded-xl bg-teal-50 border border-teal-200 shadow-sm" role="alert">
+                    <svg class="flex-shrink-0 inline w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    <div><span class="font-bold">Success!</span> Ready to paste in WhatsApp.</div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const defaultDays = [
+            { id: 'mon', letter: 'M', name: 'Mon', defaultTopic: 'Kickoff' },
+            { id: 'tue', letter: 'T', name: 'Tue', defaultTopic: 'Deep Dive' },
+            { id: 'wed', letter: 'W', name: 'Wed', defaultTopic: 'Workshop' },
+            { id: 'thu', letter: 'T', name: 'Thu', defaultTopic: 'Q&A' },
+            { id: 'fri', letter: 'F', name: 'Fri', defaultTopic: 'Social' },
+            { id: 'sat', letter: 'S', name: 'Sat', defaultTopic: 'Projects' },
+            { id: 'sun', letter: 'S', name: 'Sun', defaultTopic: 'Review' }
+        ];
+
+        const daysContainer = document.getElementById('days-container');
+
+        function renderDaysForm() {
+            defaultDays.forEach(day => {
+                const dayBlock = document.createElement('div');
+                dayBlock.className = 'bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col gap-3';
+                
+                dayBlock.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 flex items-center justify-center bg-teal-600 text-white font-bold rounded-lg shrink-0 shadow-sm">
+                            ${day.letter}
+                        </div>
+                        <input type="text" id="topic-${day.id}" value="${day.defaultTopic}" placeholder="Topic..." 
+                            class="day-input flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all font-medium">
+                    </div>
+                    <textarea id="desc-${day.id}" rows="1" placeholder="Add details for ${day.name}..." 
+                        class="day-input w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all text-sm resize-none"></textarea>
+                `;
+                daysContainer.appendChild(dayBlock);
+            });
+        }
+
+        function generateAgendaText() {
+            const title = document.getElementById('input-title').value.trim();
+            const location = document.getElementById('input-location').value.trim();
+            const reminder = document.getElementById('input-reminder').value.trim();
+
+            let output = `${title}\n\n`;
+
+            defaultDays.forEach(day => {
+                const topic = document.getElementById(`topic-${day.id}`).value.trim();
+                const desc = document.getElementById(`desc-${day.id}`).value.trim();
+                
+                if (topic || desc) {
+                    const formattedTopic = topic ? `*${topic}*` : '';
+                    const separator = (topic && desc) ? ' : ' : '';
+                    output += `${day.letter} | ${formattedTopic}${separator}${desc}\n`;
+                }
+            });
+
+            if (location || reminder) {
+                output += `\n---\n`;
+                if (location) output += `${location}\n`;
+                if (reminder) output += `${reminder}\n`;
+            }
+
+            return output;
+        }
+
+        function updatePreview() {
+            const previewEl = document.getElementById('preview-text');
+            previewEl.textContent = generateAgendaText();
+        }
+
+        function downloadTxt() {
+            const text = generateAgendaText();
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Agenda.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function copyToClipboard() {
+            const text = generateAgendaText();
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                }
+                showToast();
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast-success');
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDaysForm();
+            updatePreview();
+
+            document.addEventListener('input', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    updatePreview();
+                    // Auto-expand textareas
+                    if (e.target.tagName === 'TEXTAREA') {
+                        e.target.style.height = 'auto';
+                        e.target.style.height = e.target.scrollHeight + 'px';
+                    }
+                }
+            });
+
+            document.getElementById('btn-download').addEventListener('click', downloadTxt);
+            document.getElementById('btn-copy').addEventListener('click', copyToClipboard);
+        });
+    </script>
+</body>
+</html>
